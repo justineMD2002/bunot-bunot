@@ -120,7 +120,7 @@ function AdminPanel({ onClose, onReset }) {
       {!showConfirm ? (
         <button
           onClick={() => setShowConfirm(true)}
-          disabled={drawList.length === 0 || loading}
+          disabled={true}
           className="w-full bg-red-500 hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors"
         >
           Reset All Draws
