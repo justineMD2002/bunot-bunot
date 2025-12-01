@@ -1,20 +1,33 @@
 import { useState, useEffect } from 'react';
-import { clearAllDraws, getAllDraws } from '../utils/drawLogic';
+import { clearAllDraws, getAllDraws, getAllWishlists } from '../utils/drawLogic';
 import { getAllMembers } from '../data/familyData';
 
 function AdminPanel({ onClose, onReset }) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [draws, setDraws] = useState([]);
+  const [wishlists, setWishlists] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadDraws();
+    loadData();
   }, []);
 
-  const loadDraws = async () => {
+  const loadData = async () => {
     setLoading(true);
-    const allDraws = await getAllDraws();
+    const [allDraws, allWishlists] = await Promise.all([
+      getAllDraws(),
+      getAllWishlists()
+    ]);
+
     setDraws(allDraws);
+
+    // Convert wishlists array to object for easy lookup
+    const wishlistsMap = {};
+    allWishlists.forEach(w => {
+      wishlistsMap[w.user_id] = w.wishlist;
+    });
+    setWishlists(wishlistsMap);
+
     setLoading(false);
   };
 
@@ -31,7 +44,7 @@ function AdminPanel({ onClose, onReset }) {
     return {
       giver,
       recipientEncrypted: true,
-      wishlist: data.wishlist,
+      wishlist: wishlists[data.giverId] || null,
       drawnAt: data.drawnAt
     };
   });

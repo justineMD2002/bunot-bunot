@@ -42,6 +42,13 @@ function DrawResult({ user, userWishlist, recipientId, onDrawComplete, onReset, 
       return;
     }
 
+    // Check if this is an existing draw (user already drew before)
+    if (result.alreadyExisted) {
+      setError('You have already drawn! Each person can only draw once.');
+      setIsDrawing(false);
+      return;
+    }
+
     const drawnRecipient = result.recipient;
     setRecipient(drawnRecipient);
 

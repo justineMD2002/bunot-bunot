@@ -102,7 +102,7 @@ function App() {
             {step === 'draw' && (
               <DrawResult
                 user={selectedUser}
-                wishlist={wishlist}
+                userWishlist={wishlist}
                 onDrawComplete={handleDrawComplete}
                 onReset={handleReset}
               />
@@ -111,7 +111,7 @@ function App() {
             {step === 'result' && (
               <DrawResult
                 user={selectedUser}
-                wishlist={wishlist}
+                userWishlist={wishlist}
                 recipientId={drawnRecipient}
                 onReset={handleReset}
                 alreadyDrawn={true}
