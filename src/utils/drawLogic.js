@@ -20,6 +20,16 @@ export const getEligibleRecipients = (giverId, alreadyDrawnHashes) => {
   });
 };
 
+// Fisher-Yates shuffle algorithm for maximum randomness
+const shuffleArray = (array) => {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
+
 export const performDraw = (giverId, alreadyDrawnHashes) => {
   const eligible = getEligibleRecipients(giverId, alreadyDrawnHashes);
 
@@ -27,8 +37,14 @@ export const performDraw = (giverId, alreadyDrawnHashes) => {
     return null;
   }
 
-  const randomIndex = Math.floor(Math.random() * eligible.length);
-  return eligible[randomIndex];
+  // Shuffle the eligible recipients multiple times for extra randomness
+  let shuffled = shuffleArray(eligible);
+  shuffled = shuffleArray(shuffled);
+  shuffled = shuffleArray(shuffled);
+
+  // Pick a random index from the shuffled array
+  const randomIndex = Math.floor(Math.random() * shuffled.length);
+  return shuffled[randomIndex];
 };
 
 export const saveDrawToDatabase = async (userId, recipientId) => {
