@@ -11,7 +11,7 @@ export const familyData = [
       { id: "krystel", name: "Krystel" },
       { id: "mommy-xty", name: "Mommy Xty" },
       { id: "francis", name: "Francis" },
-      { id: "rada", name: "Rada" }
+      // { id: "rada", name: "Rada" }
     ]
   },
   {
@@ -22,7 +22,8 @@ export const familyData = [
       { id: "lilibeth", name: "Lilibeth" },
       { id: "junray", name: "Junray" },
       { id: "art", name: "Art" },
-      { id: "nathan", name: "Nathan" }
+      { id: "nathan", name: "Nathan" },
+      { id: "jam", name: "Jam" }
     ]
   },
   {
