@@ -1,0 +1,123 @@
+import { useState, useEffect } from 'react';
+import SelectMember from './components/SelectMember';
+import Wishlist from './components/Wishlist';
+import DrawResult from './components/DrawResult';
+import AdminPanel from './components/AdminPanel';
+import { getDrawFromStorage } from './utils/drawLogic';
+
+function App() {
+  const [step, setStep] = useState('select');
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [wishlist, setWishlist] = useState('');
+  const [drawnRecipient, setDrawnRecipient] = useState(null);
+  const [showAdmin, setShowAdmin] = useState(false);
+
+  useEffect(() => {
+    if (selectedUser) {
+      const existingDraw = getDrawFromStorage(selectedUser.id);
+      if (existingDraw) {
+        setDrawnRecipient(existingDraw.recipientId);
+        setWishlist(existingDraw.wishlist || '');
+        setStep('result');
+      }
+    }
+  }, [selectedUser]);
+
+  const handleMemberSelect = (member) => {
+    setSelectedUser(member);
+    const existingDraw = getDrawFromStorage(member.id);
+    if (existingDraw) {
+      setDrawnRecipient(existingDraw.recipientId);
+      setWishlist(existingDraw.wishlist || '');
+      setStep('result');
+    } else {
+      setStep('wishlist');
+    }
+  };
+
+  const handleWishlistSubmit = (wishlistText) => {
+    setWishlist(wishlistText);
+    setStep('draw');
+  };
+
+  const handleDrawComplete = (recipient) => {
+    setDrawnRecipient(recipient);
+    setStep('result');
+  };
+
+  const handleReset = () => {
+    setStep('select');
+    setSelectedUser(null);
+    setWishlist('');
+    setDrawnRecipient(null);
+  };
+
+  const toggleAdmin = () => {
+    setShowAdmin(!showAdmin);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-red-600 via-red-700 to-green-700 py-8 px-4">
+      <div className="max-w-md mx-auto">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-white mb-2 drop-shadow-lg">
+            Bunot-Bunot
+          </h1>
+          <h2 className="text-lg text-white/90 mb-1">
+            Zaragoza Family AKA Team Nustar
+          </h2>
+          <h3 className="text-md text-white/80">
+            Christmas Party 2025
+          </h3>
+        </div>
+
+        {showAdmin ? (
+          <AdminPanel onClose={toggleAdmin} onReset={handleReset} />
+        ) : (
+          <>
+            {step === 'select' && (
+              <SelectMember onSelect={handleMemberSelect} />
+            )}
+
+            {step === 'wishlist' && (
+              <Wishlist
+                user={selectedUser}
+                onSubmit={handleWishlistSubmit}
+                onBack={handleReset}
+              />
+            )}
+
+            {step === 'draw' && (
+              <DrawResult
+                user={selectedUser}
+                wishlist={wishlist}
+                onDrawComplete={handleDrawComplete}
+                onReset={handleReset}
+              />
+            )}
+
+            {step === 'result' && (
+              <DrawResult
+                user={selectedUser}
+                wishlist={wishlist}
+                recipientId={drawnRecipient}
+                onReset={handleReset}
+                alreadyDrawn={true}
+              />
+            )}
+          </>
+        )}
+
+        <button
+          onClick={toggleAdmin}
+          className="fixed bottom-4 right-4 w-12 h-12 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white text-xl shadow-lg transition-colors"
+          aria-label="Admin Panel"
+        >
+          ⚙️
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default App;
