@@ -1,37 +1,54 @@
 import { useState, useEffect } from 'react';
-import { performDraw, saveDrawToStorage, getAllDrawnRecipients } from '../utils/drawLogic';
+import { performDrawWithRetry, getWishlist, saveWishlist } from '../utils/drawLogic';
 import { getAllMembers } from '../data/familyData';
 
-function DrawResult({ user, wishlist, recipientId, onDrawComplete, onReset, alreadyDrawn = false }) {
+function DrawResult({ user, userWishlist, recipientId, onDrawComplete, onReset, alreadyDrawn = false }) {
   const [recipient, setRecipient] = useState(null);
+  const [recipientWishlist, setRecipientWishlist] = useState('');
   const [isDrawing, setIsDrawing] = useState(!alreadyDrawn);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     if (alreadyDrawn && recipientId) {
-      const allMembers = getAllMembers();
-      const recipientData = allMembers.find(m => m.id === recipientId);
-      setRecipient(recipientData);
-      setIsDrawing(false);
+      loadExistingDraw();
     } else if (!alreadyDrawn) {
       performDrawAnimation();
     }
   }, [alreadyDrawn, recipientId]);
 
+  const loadExistingDraw = async () => {
+    const allMembers = getAllMembers();
+    const recipientData = allMembers.find(m => m.id === recipientId);
+    setRecipient(recipientData);
+
+    // Fetch recipient's wishlist
+    const wishlist = await getWishlist(recipientId);
+    setRecipientWishlist(wishlist || '');
+    setIsDrawing(false);
+  };
+
   const performDrawAnimation = async () => {
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    const alreadyDrawnList = getAllDrawnRecipients();
-    const drawnRecipient = performDraw(user.id, alreadyDrawnList);
+    // Save user's wishlist first
+    await saveWishlist(user.id, userWishlist);
 
-    if (!drawnRecipient) {
-      setError('No available recipients to draw. Please contact the admin.');
+    // Perform the draw with automatic retry on conflicts
+    const result = await performDrawWithRetry(user.id);
+
+    if (!result.success) {
+      setError(result.error || 'Failed to draw. Please try again.');
       setIsDrawing(false);
       return;
     }
 
-    saveDrawToStorage(user.id, drawnRecipient.id, wishlist);
+    const drawnRecipient = result.recipient;
     setRecipient(drawnRecipient);
+
+    // Fetch recipient's wishlist
+    const wishlist = await getWishlist(drawnRecipient.id);
+    setRecipientWishlist(wishlist || '');
+
     setIsDrawing(false);
     onDrawComplete(drawnRecipient.id);
   };
@@ -105,13 +122,22 @@ function DrawResult({ user, wishlist, recipientId, onDrawComplete, onReset, alre
         </div>
       </div>
 
-      {wishlist && (
-        <div className="bg-blue-50 rounded-lg p-4 mb-6">
-          <h3 className="text-sm font-semibold text-blue-900 mb-2">
-            Your Wishlist:
+      {recipientWishlist && (
+        <div className="bg-green-50 rounded-lg p-4 mb-6">
+          <h3 className="text-sm font-semibold text-green-900 mb-2 flex items-center gap-2">
+            <span>🎁</span>
+            <span>{recipient?.name}'s Wishlist:</span>
           </h3>
-          <p className="text-sm text-blue-800 whitespace-pre-wrap">
-            {wishlist}
+          <p className="text-sm text-green-800 whitespace-pre-wrap">
+            {recipientWishlist}
+          </p>
+        </div>
+      )}
+
+      {!recipientWishlist && (
+        <div className="bg-gray-50 rounded-lg p-4 mb-6">
+          <p className="text-sm text-gray-600 italic text-center">
+            {recipient?.name} hasn't added a wishlist yet
           </p>
         </div>
       )}

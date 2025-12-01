@@ -1,28 +1,36 @@
-import { useState } from 'react';
-import { clearAllDraws } from '../utils/drawLogic';
+import { useState, useEffect } from 'react';
+import { clearAllDraws, getAllDraws } from '../utils/drawLogic';
 import { getAllMembers } from '../data/familyData';
 
 function AdminPanel({ onClose, onReset }) {
   const [showConfirm, setShowConfirm] = useState(false);
-  const [draws, setDraws] = useState(() => {
-    const savedDraws = JSON.parse(localStorage.getItem('manitoDraws') || '{}');
-    return savedDraws;
-  });
+  const [draws, setDraws] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleResetAll = () => {
-    clearAllDraws();
-    setDraws({});
+  useEffect(() => {
+    loadDraws();
+  }, []);
+
+  const loadDraws = async () => {
+    setLoading(true);
+    const allDraws = await getAllDraws();
+    setDraws(allDraws);
+    setLoading(false);
+  };
+
+  const handleResetAll = async () => {
+    await clearAllDraws();
+    setDraws([]);
     onReset();
     setShowConfirm(false);
   };
 
   const allMembers = getAllMembers();
-  const drawList = Object.entries(draws).map(([giverId, data]) => {
-    const giver = allMembers.find(m => m.id === giverId);
-    const recipient = allMembers.find(m => m.id === data.recipientId);
+  const drawList = draws.map((data) => {
+    const giver = allMembers.find(m => m.id === data.giverId);
     return {
       giver,
-      recipient,
+      recipientEncrypted: true,
       wishlist: data.wishlist,
       drawnAt: data.drawnAt
     };
@@ -43,11 +51,16 @@ function AdminPanel({ onClose, onReset }) {
       <div className="mb-6">
         <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4">
           <p className="text-sm text-blue-800">
-            <strong>Total Draws:</strong> {Object.keys(draws).length} / {allMembers.length}
+            <strong>Total Draws:</strong> {draws.length} / {allMembers.length}
           </p>
         </div>
 
-        {drawList.length > 0 ? (
+        {loading ? (
+          <div className="text-center py-8 text-gray-500">
+            <div className="animate-bounce text-4xl mb-2">🎄</div>
+            <p>Loading draws...</p>
+          </div>
+        ) : drawList.length > 0 ? (
           <div className="space-y-3 max-h-96 overflow-y-auto">
             <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">
               Draw History
@@ -65,10 +78,11 @@ function AdminPanel({ onClose, onReset }) {
                     <p className="text-sm text-gray-600">→</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium text-gray-800">
-                      {draw.recipient?.name}
+                    <p className="font-medium text-gray-800 flex items-center gap-1">
+                      <span>🔒</span>
+                      <span>Hidden</span>
                     </p>
-                    <p className="text-xs text-gray-500">{draw.recipient?.familyName}</p>
+                    <p className="text-xs text-gray-500 italic">For privacy</p>
                   </div>
                 </div>
                 {draw.wishlist && (
@@ -93,7 +107,7 @@ function AdminPanel({ onClose, onReset }) {
       {!showConfirm ? (
         <button
           onClick={() => setShowConfirm(true)}
-          disabled={drawList.length === 0}
+          disabled={drawList.length === 0 || loading}
           className="w-full bg-red-500 hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors"
         >
           Reset All Draws

@@ -3,7 +3,7 @@ import SelectMember from './components/SelectMember';
 import Wishlist from './components/Wishlist';
 import DrawResult from './components/DrawResult';
 import AdminPanel from './components/AdminPanel';
-import { getDrawFromStorage } from './utils/drawLogic';
+import { getDrawFromDatabase } from './utils/drawLogic';
 
 function App() {
   const [step, setStep] = useState('select');
@@ -11,28 +11,35 @@ function App() {
   const [wishlist, setWishlist] = useState('');
   const [drawnRecipient, setDrawnRecipient] = useState(null);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (selectedUser) {
-      const existingDraw = getDrawFromStorage(selectedUser.id);
-      if (existingDraw) {
-        setDrawnRecipient(existingDraw.recipientId);
-        setWishlist(existingDraw.wishlist || '');
-        setStep('result');
-      }
+      checkExistingDraw(selectedUser.id);
     }
   }, [selectedUser]);
 
-  const handleMemberSelect = (member) => {
-    setSelectedUser(member);
-    const existingDraw = getDrawFromStorage(member.id);
+  const checkExistingDraw = async (userId) => {
+    setLoading(true);
+    const existingDraw = await getDrawFromDatabase(userId);
     if (existingDraw) {
       setDrawnRecipient(existingDraw.recipientId);
-      setWishlist(existingDraw.wishlist || '');
+      setStep('result');
+    }
+    setLoading(false);
+  };
+
+  const handleMemberSelect = async (member) => {
+    setSelectedUser(member);
+    setLoading(true);
+    const existingDraw = await getDrawFromDatabase(member.id);
+    if (existingDraw) {
+      setDrawnRecipient(existingDraw.recipientId);
       setStep('result');
     } else {
       setStep('wishlist');
     }
+    setLoading(false);
   };
 
   const handleWishlistSubmit = (wishlistText) => {
@@ -73,6 +80,11 @@ function App() {
 
         {showAdmin ? (
           <AdminPanel onClose={toggleAdmin} onReset={handleReset} />
+        ) : loading ? (
+          <div className="bg-white rounded-2xl shadow-2xl p-8 text-center">
+            <div className="animate-bounce text-6xl mb-4">🎄</div>
+            <p className="text-gray-600">Loading...</p>
+          </div>
         ) : (
           <>
             {step === 'select' && (
