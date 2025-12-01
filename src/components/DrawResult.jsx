@@ -115,7 +115,7 @@ function DrawResult({ user, userWishlist, recipientId, onDrawComplete, onReset, 
         </p>
       </div>
 
-      <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+      <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
         <div className="flex">
           <div className="text-2xl mr-3">🤫</div>
           <div>
@@ -124,6 +124,20 @@ function DrawResult({ user, userWishlist, recipientId, onDrawComplete, onReset, 
             </p>
             <p className="text-xs text-yellow-700 mt-1">
               Don't tell anyone who you got. That's the fun of Manito-Manita!
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+        <div className="flex">
+          <div className="text-2xl mr-3">💰</div>
+          <div>
+            <p className="text-sm font-medium text-blue-800">
+              Gift Budget
+            </p>
+            <p className="text-xs text-blue-700 mt-1">
+              Minimum of ₱500 for your gift. Make it thoughtful and special!
             </p>
           </div>
         </div>

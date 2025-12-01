@@ -4,10 +4,12 @@ import { supabase } from '../lib/supabase';
 
 function SelectMember({ onSelect }) {
   const [usersWhoHaveDrawn, setUsersWhoHaveDrawn] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Fetch users who have already drawn
     const fetchDrawnUsers = async () => {
+      setLoading(true);
       const { data, error } = await supabase
         .from('draws')
         .select('giver_id');
@@ -15,6 +17,7 @@ function SelectMember({ onSelect }) {
       if (!error && data) {
         setUsersWhoHaveDrawn(data.map(d => d.giver_id));
       }
+      setLoading(false);
     };
 
     fetchDrawnUsers();
@@ -29,9 +32,15 @@ function SelectMember({ onSelect }) {
           schema: 'public',
           table: 'draws'
         },
-        (payload) => {
-          // Refetch the list of users who have drawn
-          fetchDrawnUsers();
+        async (payload) => {
+          // Refetch the list of users who have drawn (without showing loading)
+          const { data, error } = await supabase
+            .from('draws')
+            .select('giver_id');
+
+          if (!error && data) {
+            setUsersWhoHaveDrawn(data.map(d => d.giver_id));
+          }
         }
       )
       .subscribe();
@@ -41,6 +50,15 @@ function SelectMember({ onSelect }) {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-2xl shadow-2xl p-8 text-center">
+        <div className="animate-bounce text-6xl mb-4">🎄</div>
+        <p className="text-gray-600">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-2xl shadow-2xl p-6 animate-fade-in">
