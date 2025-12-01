@@ -4,13 +4,13 @@ import { encryptRecipient, decryptRecipient, hashRecipient } from './encryption'
 
 export const getEligibleRecipients = (giverId, alreadyDrawnHashes) => {
   const allMembers = getAllMembers();
-  const giverFamily = getFamilyByMemberId(giverId);
 
   return allMembers.filter(member => {
+    // Only prevent drawing yourself
     if (member.id === giverId) return false;
+    // Prevent drawing someone who's already been drawn
     const memberHash = hashRecipient(member.id);
     if (alreadyDrawnHashes.includes(memberHash)) return false;
-    if (member.familyName === giverFamily) return false;
     return true;
   });
 };
