@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { familyData } from '../data/familyData';
 import { supabase } from '../lib/supabase';
+import { checkIfAllDrawsComplete } from '../utils/drawLogic';
 
 function SelectMember({ onSelect }) {
   const [usersWhoHaveDrawn, setUsersWhoHaveDrawn] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [allDrawsComplete, setAllDrawsComplete] = useState(false);
 
   useEffect(() => {
     // Fetch users who have already drawn
@@ -17,6 +19,11 @@ function SelectMember({ onSelect }) {
       if (!error && data) {
         setUsersWhoHaveDrawn(data.map(d => d.giver_id));
       }
+
+      // Check if all draws are complete
+      const drawStatus = await checkIfAllDrawsComplete();
+      setAllDrawsComplete(drawStatus.isComplete);
+
       setLoading(false);
     };
 
@@ -41,6 +48,10 @@ function SelectMember({ onSelect }) {
           if (!error && data) {
             setUsersWhoHaveDrawn(data.map(d => d.giver_id));
           }
+
+          // Check if all draws are complete
+          const drawStatus = await checkIfAllDrawsComplete();
+          setAllDrawsComplete(drawStatus.isComplete);
         }
       )
       .subscribe();
@@ -56,6 +67,31 @@ function SelectMember({ onSelect }) {
       <div className="bg-white rounded-2xl shadow-2xl p-8 text-center">
         <div className="animate-bounce text-6xl mb-4">🎄</div>
         <p className="text-gray-600">Loading...</p>
+      </div>
+    );
+  }
+
+  if (allDrawsComplete) {
+    return (
+      <div className="bg-white rounded-2xl shadow-2xl p-8 text-center animate-fade-in">
+        <div className="text-6xl mb-6">🎉🎄🎁</div>
+        <h2 className="text-3xl font-bold text-gray-800 mb-4">
+          All Names Are Drawn!
+        </h2>
+        <p className="text-xl text-gray-600 mb-6">
+          Everyone has successfully drawn their bunot-bunot recipient.
+        </p>
+        <div className="bg-gradient-to-r from-red-100 to-green-100 rounded-lg p-6 mb-6">
+          <p className="text-2xl font-semibold text-gray-800 mb-2">
+            See you on
+          </p>
+          <p className="text-4xl font-bold bg-gradient-to-r from-red-600 to-green-600 bg-clip-text text-transparent">
+            December 24, 2025!
+          </p>
+        </div>
+        <p className="text-gray-500 text-sm">
+          Get ready for the gift exchange at the Christmas party!
+        </p>
       </div>
     );
   }

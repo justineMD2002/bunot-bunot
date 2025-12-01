@@ -240,3 +240,31 @@ export const getAllWishlists = async () => {
     return [];
   }
 };
+
+export const checkIfAllDrawsComplete = async () => {
+  try {
+    const allMembers = getAllMembers();
+    const totalMembers = allMembers.length;
+
+    const { data, error } = await supabase
+      .from('draws')
+      .select('giver_id');
+
+    if (error) throw error;
+
+    const totalDraws = data ? data.length : 0;
+
+    return {
+      isComplete: totalDraws === totalMembers,
+      totalMembers,
+      totalDraws
+    };
+  } catch (error) {
+    console.error('Error checking if all draws complete:', error);
+    return {
+      isComplete: false,
+      totalMembers: 0,
+      totalDraws: 0
+    };
+  }
+};
