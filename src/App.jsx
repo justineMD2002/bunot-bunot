@@ -71,7 +71,7 @@ function App() {
             Bunot-Bunot
           </h1>
           <h2 className="text-lg text-white/90 mb-1">
-            Zaragoza Family AKA Team Nustar
+            Familia Zaragoza AKA Team Nustar
           </h2>
           <h3 className="text-md text-white/80">
             Christmas Party 2025
