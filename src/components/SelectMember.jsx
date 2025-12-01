@@ -1,6 +1,47 @@
+import { useState, useEffect } from 'react';
 import { familyData } from '../data/familyData';
+import { supabase } from '../lib/supabase';
 
 function SelectMember({ onSelect }) {
+  const [usersWhoHaveDrawn, setUsersWhoHaveDrawn] = useState([]);
+
+  useEffect(() => {
+    // Fetch users who have already drawn
+    const fetchDrawnUsers = async () => {
+      const { data, error } = await supabase
+        .from('draws')
+        .select('giver_id');
+
+      if (!error && data) {
+        setUsersWhoHaveDrawn(data.map(d => d.giver_id));
+      }
+    };
+
+    fetchDrawnUsers();
+
+    // Subscribe to real-time changes on the draws table
+    const channel = supabase
+      .channel('draws-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'draws'
+        },
+        (payload) => {
+          // Refetch the list of users who have drawn
+          fetchDrawnUsers();
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription on unmount
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   return (
     <div className="bg-white rounded-2xl shadow-2xl p-6 animate-fade-in">
       <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
@@ -11,24 +52,36 @@ function SelectMember({ onSelect }) {
       </p>
 
       <div className="space-y-4">
-        {familyData.map((family) => (
-          <div key={family.familyName} className="border-b border-gray-200 last:border-0 pb-4 last:pb-0">
-            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-              {family.familyName}
-            </h3>
-            <div className="grid grid-cols-2 gap-2">
-              {family.members.map((member) => (
-                <button
-                  key={member.id}
-                  onClick={() => onSelect({ ...member, familyName: family.familyName })}
-                  className="bg-gradient-to-r from-red-500 to-green-500 hover:from-red-600 hover:to-green-600 text-white font-medium py-3 px-4 rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200"
-                >
-                  {member.name}
-                </button>
-              ))}
+        {familyData.map((family) => {
+          // Filter out members who have already drawn
+          const availableMembers = family.members.filter(
+            member => !usersWhoHaveDrawn.includes(member.id)
+          );
+
+          // Only show the family section if there are available members
+          if (availableMembers.length === 0) {
+            return null;
+          }
+
+          return (
+            <div key={family.familyName} className="border-b border-gray-200 last:border-0 pb-4 last:pb-0">
+              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                {family.familyName}
+              </h3>
+              <div className="grid grid-cols-2 gap-2">
+                {availableMembers.map((member) => (
+                  <button
+                    key={member.id}
+                    onClick={() => onSelect({ ...member, familyName: family.familyName })}
+                    className="bg-gradient-to-r from-red-500 to-green-500 hover:from-red-600 hover:to-green-600 text-white font-medium py-3 px-4 rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200"
+                  >
+                    {member.name}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
