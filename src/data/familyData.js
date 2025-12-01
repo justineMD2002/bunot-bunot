@@ -10,7 +10,8 @@ export const familyData = [
       { id: "baby-aki", name: "Baby Aki" },
       { id: "krystel", name: "Krystel" },
       { id: "mommy-xty", name: "Mommy Xty" },
-      { id: "francis", name: "Francis" }
+      { id: "francis", name: "Francis" },
+      { id: "rada", name: "Rada" }
     ]
   },
   {
