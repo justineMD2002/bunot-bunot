@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { performDrawWithRetry, getWishlist, saveWishlist } from '../utils/drawLogic';
+import { performDrawWithRetry, getWishlist, saveWishlist, getDrawFromDatabase } from '../utils/drawLogic';
 import { getAllMembers } from '../data/familyData';
 
 function DrawResult({ user, userWishlist, recipientId, onDrawComplete, onReset, alreadyDrawn = false }) {
@@ -7,6 +7,7 @@ function DrawResult({ user, userWishlist, recipientId, onDrawComplete, onReset, 
   const [recipientWishlist, setRecipientWishlist] = useState('');
   const [isDrawing, setIsDrawing] = useState(!alreadyDrawn);
   const [error, setError] = useState(null);
+  const [pin, setPin] = useState(null);
 
   useEffect(() => {
     if (alreadyDrawn && recipientId) {
@@ -20,6 +21,12 @@ function DrawResult({ user, userWishlist, recipientId, onDrawComplete, onReset, 
     const allMembers = getAllMembers();
     const recipientData = allMembers.find(m => m.id === recipientId);
     setRecipient(recipientData);
+
+    // Fetch the draw data to get the PIN
+    const drawData = await getDrawFromDatabase(user.id);
+    if (drawData && drawData.pin) {
+      setPin(drawData.pin);
+    }
 
     // Fetch recipient's wishlist
     const wishlist = await getWishlist(recipientId);
@@ -51,6 +58,11 @@ function DrawResult({ user, userWishlist, recipientId, onDrawComplete, onReset, 
 
     const drawnRecipient = result.recipient;
     setRecipient(drawnRecipient);
+
+    // Set the PIN
+    if (result.pin) {
+      setPin(result.pin);
+    }
 
     // Fetch recipient's wishlist
     const wishlist = await getWishlist(drawnRecipient.id);
@@ -110,9 +122,17 @@ function DrawResult({ user, userWishlist, recipientId, onDrawComplete, onReset, 
         <div className="bg-gradient-to-r from-red-500 to-green-500 text-white text-3xl font-bold py-6 px-4 rounded-xl shadow-lg mb-4">
           {recipient?.name}
         </div>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-500 mb-4">
           from {recipient?.familyName}
         </p>
+
+        {pin && (
+          <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl p-4 shadow-lg">
+            <p className="text-white text-sm font-medium mb-1">Your Secret PIN</p>
+            <p className="text-white text-3xl font-bold tracking-widest">{pin}</p>
+            <p className="text-white text-xs mt-2 opacity-90">Save this PIN to view your draw later</p>
+          </div>
+        )}
       </div>
 
       <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">

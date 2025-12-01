@@ -2,6 +2,11 @@ import { getFamilyByMemberId, getAllMembers } from '../data/familyData';
 import { supabase } from '../lib/supabase';
 import { encryptRecipient, decryptRecipient, hashRecipient } from './encryption';
 
+// Generate a random 4-digit PIN
+export const generatePin = () => {
+  return Math.floor(1000 + Math.random() * 9000).toString();
+};
+
 export const getEligibleRecipients = (giverId, alreadyDrawnHashes) => {
   const allMembers = getAllMembers();
 
@@ -30,6 +35,7 @@ export const saveDrawToDatabase = async (userId, recipientId) => {
   try {
     const encryptedRecipientId = encryptRecipient(recipientId, userId);
     const recipientHash = hashRecipient(recipientId);
+    const pin = generatePin();
 
     const { data, error } = await supabase
       .from('draws')
@@ -37,6 +43,7 @@ export const saveDrawToDatabase = async (userId, recipientId) => {
         giver_id: userId,
         recipient_id: encryptedRecipientId,
         recipient_hash: recipientHash,
+        pin_hash: pin,
         drawn_at: new Date().toISOString()
       })
       .select();
@@ -52,7 +59,7 @@ export const saveDrawToDatabase = async (userId, recipientId) => {
       }
       throw error;
     }
-    return { success: true, data };
+    return { success: true, data, pin };
   } catch (error) {
     console.error('Error saving draw:', error);
     return { success: false, error };
@@ -76,7 +83,7 @@ export const performDrawWithRetry = async (userId, maxRetries = 5) => {
     const result = await saveDrawToDatabase(userId, drawnRecipient.id);
 
     if (result.success) {
-      return { success: true, recipient: drawnRecipient };
+      return { success: true, recipient: drawnRecipient, pin: result.pin };
     }
 
     // If recipient was taken by someone else (concurrent draw), retry
@@ -93,7 +100,7 @@ export const performDrawWithRetry = async (userId, maxRetries = 5) => {
       if (existingDraw) {
         const allMembers = getAllMembers();
         const recipient = allMembers.find(m => m.id === existingDraw.recipientId);
-        return { success: true, recipient, alreadyExisted: true };
+        return { success: true, recipient, pin: existingDraw.pin, alreadyExisted: true };
       }
     }
 
@@ -124,7 +131,8 @@ export const getDrawFromDatabase = async (userId) => {
 
     return {
       recipientId: decryptedRecipientId,
-      drawnAt: data.drawn_at
+      drawnAt: data.drawn_at,
+      pin: data.pin_hash
     };
   } catch (error) {
     console.error('Error getting draw:', error);
@@ -169,12 +177,18 @@ export const getAllDraws = async () => {
 
 export const clearAllDraws = async () => {
   try {
-    const { error } = await supabase
+    const { error: errorDraw } = await supabase
       .from('draws')
       .delete()
       .neq('giver_id', '');
 
-    if (error) throw error;
+    const { error: errorWish } = await supabase
+      .from('wishlists')
+      .delete()
+      .neq('user_id', '');
+
+    if (errorDraw) throw errorDraw;
+    if (errorWish) throw errorWish;
     return { success: true };
   } catch (error) {
     console.error('Error clearing draws:', error);

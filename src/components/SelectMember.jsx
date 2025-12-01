@@ -7,6 +7,7 @@ function SelectMember({ onSelect }) {
   const [usersWhoHaveDrawn, setUsersWhoHaveDrawn] = useState([]);
   const [loading, setLoading] = useState(true);
   const [allDrawsComplete, setAllDrawsComplete] = useState(false);
+  const [showNames, setShowNames] = useState(false);
 
   useEffect(() => {
     // Fetch users who have already drawn
@@ -71,7 +72,7 @@ function SelectMember({ onSelect }) {
     );
   }
 
-  if (allDrawsComplete) {
+  if (allDrawsComplete && !showNames) {
     return (
       <div className="bg-white rounded-2xl shadow-2xl p-8 text-center animate-fade-in">
         <div className="text-6xl mb-6">🎉🎄🎁</div>
@@ -89,9 +90,15 @@ function SelectMember({ onSelect }) {
             December 24, 2025!
           </p>
         </div>
-        <p className="text-gray-500 text-sm">
+        <p className="text-gray-500 text-sm mb-6">
           Get ready for the gift exchange at the Christmas party!
         </p>
+        <button
+          onClick={() => setShowNames(true)}
+          className="bg-gradient-to-r from-red-500 to-green-500 hover:from-red-600 hover:to-green-600 text-white font-medium py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition-all"
+        >
+          View All Names
+        </button>
       </div>
     );
   }
@@ -107,31 +114,28 @@ function SelectMember({ onSelect }) {
 
       <div className="space-y-4">
         {familyData.map((family) => {
-          // Filter out members who have already drawn
-          const availableMembers = family.members.filter(
-            member => !usersWhoHaveDrawn.includes(member.id)
-          );
-
-          // Only show the family section if there are available members
-          if (availableMembers.length === 0) {
-            return null;
-          }
-
           return (
             <div key={family.familyName} className="border-b border-gray-200 last:border-0 pb-4 last:pb-0">
               <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
                 {family.familyName}
               </h3>
               <div className="grid grid-cols-2 gap-2">
-                {availableMembers.map((member) => (
-                  <button
-                    key={member.id}
-                    onClick={() => onSelect({ ...member, familyName: family.familyName })}
-                    className="bg-gradient-to-r from-red-500 to-green-500 hover:from-red-600 hover:to-green-600 text-white font-medium py-3 px-4 rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200"
-                  >
-                    {member.name}
-                  </button>
-                ))}
+                {family.members.map((member) => {
+                  const hasDrawn = usersWhoHaveDrawn.includes(member.id);
+                  return (
+                    <button
+                      key={member.id}
+                      onClick={() => onSelect({ ...member, familyName: family.familyName })}
+                      className={
+                        hasDrawn
+                          ? "bg-gray-300 hover:bg-gray-400 text-gray-600 font-medium py-3 px-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
+                          : "bg-gradient-to-r from-red-500 to-green-500 hover:from-red-600 hover:to-green-600 text-white font-medium py-3 px-4 rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200"
+                      }
+                    >
+                      {member.name}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           );

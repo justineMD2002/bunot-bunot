@@ -3,6 +3,7 @@ import SelectMember from './components/SelectMember';
 import Wishlist from './components/Wishlist';
 import DrawResult from './components/DrawResult';
 import AdminPanel from './components/AdminPanel';
+import PinVerification from './components/PinVerification';
 import { getDrawFromDatabase } from './utils/drawLogic';
 
 function App() {
@@ -24,7 +25,7 @@ function App() {
     const existingDraw = await getDrawFromDatabase(userId);
     if (existingDraw) {
       setDrawnRecipient(existingDraw.recipientId);
-      setStep('result');
+      setStep('pin-verify');
     }
     setLoading(false);
   };
@@ -35,7 +36,7 @@ function App() {
     const existingDraw = await getDrawFromDatabase(member.id);
     if (existingDraw) {
       setDrawnRecipient(existingDraw.recipientId);
-      setStep('result');
+      setStep('pin-verify');
     } else {
       setStep('wishlist');
     }
@@ -50,6 +51,17 @@ function App() {
   const handleDrawComplete = (recipient) => {
     setDrawnRecipient(recipient);
     setStep('result');
+  };
+
+  const handlePinVerify = async (enteredPin) => {
+    if (!selectedUser) return false;
+
+    const existingDraw = await getDrawFromDatabase(selectedUser.id);
+    if (existingDraw && existingDraw.pin === enteredPin) {
+      setStep('result');
+      return true;
+    }
+    return false;
   };
 
   const handleReset = () => {
@@ -95,6 +107,14 @@ function App() {
               <Wishlist
                 user={selectedUser}
                 onSubmit={handleWishlistSubmit}
+                onBack={handleReset}
+              />
+            )}
+
+            {step === 'pin-verify' && (
+              <PinVerification
+                user={selectedUser}
+                onVerify={handlePinVerify}
                 onBack={handleReset}
               />
             )}
