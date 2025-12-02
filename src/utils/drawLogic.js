@@ -1,10 +1,22 @@
 import { getFamilyByMemberId, getAllMembers } from '../data/familyData';
 import { supabase } from '../lib/supabase';
 import { encryptRecipient, decryptRecipient, hashRecipient } from './encryption';
+import bcrypt from 'bcryptjs';
 
 // Generate a random 4-digit PIN
 export const generatePin = () => {
   return Math.floor(1000 + Math.random() * 9000).toString();
+};
+
+// Verify PIN against hash stored in database
+export const verifyPin = async (enteredPin, pinHash) => {
+  try {
+    const isValid = await bcrypt.compare(enteredPin, pinHash);
+    return isValid;
+  } catch (error) {
+    console.error('Error verifying PIN:', error);
+    return false;
+  }
 };
 
 export const getEligibleRecipients = (giverId, alreadyDrawnHashes) => {

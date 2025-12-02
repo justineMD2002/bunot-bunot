@@ -4,7 +4,7 @@ import Wishlist from './components/Wishlist';
 import DrawResult from './components/DrawResult';
 import AdminPanel from './components/AdminPanel';
 import PinVerification from './components/PinVerification';
-import { getDrawFromDatabase } from './utils/drawLogic';
+import { getDrawFromDatabase, verifyPin } from './utils/drawLogic';
 
 function App() {
   const [step, setStep] = useState('select');
@@ -57,9 +57,12 @@ function App() {
     if (!selectedUser) return false;
 
     const existingDraw = await getDrawFromDatabase(selectedUser.id);
-    if (existingDraw && existingDraw.pin === enteredPin) {
-      setStep('result');
-      return true;
+    if (existingDraw) {
+      const isValid = await verifyPin(enteredPin, existingDraw.pin);
+      if (isValid) {
+        setStep('result');
+        return true;
+      }
     }
     return false;
   };

@@ -22,11 +22,9 @@ function DrawResult({ user, userWishlist, recipientId, onDrawComplete, onReset, 
     const recipientData = allMembers.find(m => m.id === recipientId);
     setRecipient(recipientData);
 
-    // Fetch the draw data to get the PIN
-    const drawData = await getDrawFromDatabase(user.id);
-    if (drawData && drawData.pin) {
-      setPin(drawData.pin);
-    }
+    // Don't fetch PIN for existing draws - it's hashed in the database
+    // The user already verified their PIN to get here
+    setPin(null);
 
     // Fetch recipient's wishlist
     const wishlist = await getWishlist(recipientId);
@@ -131,6 +129,13 @@ function DrawResult({ user, userWishlist, recipientId, onDrawComplete, onReset, 
             <p className="text-white text-sm font-medium mb-1">Your Secret PIN</p>
             <p className="text-white text-3xl font-bold tracking-widest">{pin}</p>
             <p className="text-white text-xs mt-2 opacity-90">Save this PIN to view your draw later</p>
+          </div>
+        )}
+
+        {!pin && alreadyDrawn && (
+          <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl p-4 shadow-lg">
+            <p className="text-white text-sm font-medium mb-1">PIN Verified</p>
+            <p className="text-white text-sm opacity-90">You've successfully verified your identity</p>
           </div>
         )}
       </div>
