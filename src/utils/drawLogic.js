@@ -65,13 +65,16 @@ export const saveDrawToDatabase = async (userId, recipientId) => {
     const recipientHash = hashRecipient(recipientId);
     const pin = generatePin();
 
+    // Hash the PIN with bcrypt (10 rounds)
+    const pinHash = await bcrypt.hash(pin, 10);
+
     const { data, error } = await supabase
       .from('draws')
       .insert({
         giver_id: userId,
         recipient_id: encryptedRecipientId,
         recipient_hash: recipientHash,
-        pin_hash: pin,
+        pin_hash: pinHash,
         drawn_at: new Date().toISOString()
       })
       .select();
